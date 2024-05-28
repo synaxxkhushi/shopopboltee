@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shopping Website</title>
+    <style>
+        body {
+            background-color: #000;
+            color: #fff;
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+        }
+
+        h1 {
+            font-size: 3rem;
+            margin: 20px 0;
+            text-shadow: 0 0 10px #fff, 0 0 20px #00f;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+        }
+
+        .product-container {
+            width: 48%; /* Adjusted width to fit two items in a row */
+            margin-bottom: 20px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+        }
+
+        .product {
+            border: 1px solid #ccc;
+            padding: 20px;
+            width: 100%;
+        }
+
+        .product img {
+            max-width: 100%;
+            margin-bottom: 10px;
+        }
+
+        .btn-buy {
+            background-color: #ff0000;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 5px;
+            width: 100%;
+        }
+
+        .cart {
+            border: 1px solid #ccc;
+            padding: 20px;
+            margin-top: 20px;
+            width: 100%;
+            box-sizing: border-box;
+            align-self: flex-start;
+        }
+
+        .cart-item {
+            margin-bottom: 10px;
+        }
+
+        .payment-info {
+            margin-top: 20px;
+        }
+
+        .payment-info img {
+            max-width: 200px;
+        }
+
+        .btn-cart {
+            background-color: #ff0000;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 5px;
+            width: 100%;
+        }
+
+        .btn-cart:hover {
+            background-color: #0056b3;
+        }
+
+        .neon-text {
+            animation: neon 1.5s ease-in-out infinite alternate;
+        }
+
+        @keyframes neon {
+            from {
+                text-shadow: 0 0 10px #fff, 0 0 20px #00f, 0 0 30px #0ff, 0 0 40px #0f0, 0 0 70px #0f0, 0 0 80px #0f0, 0 0 100px #0f0;
+            }
+            to {
+                text-shadow: 0 0 5px #fff, 0 0 10px #00f, 0 0 15px #0ff, 0 0 20px #0f0, 0 0 35px #0f0, 0 0 40px #0f0, 0 0 50px #0f0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1 class="neon-text">Welcome to API Shopping 🛒 </h1>
+    <div class="container" id="products"></div>
+    <div class="cart">
+        <h2>Cart</h2>
+        <div id="cart"></div>
+        <button class="btn-cart" id="checkout">Checkout</button>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const productsContainer = document.getElementById('products');
+            const cartContainer = document.getElementById('cart');
+            const checkoutButton = document.getElementById('checkout');
+
+            // Fetch products from PHP endpoint
+            fetch('http://localhost:8080/shopapi/product.php')
+            .then(response => response.json())
+            .then(data => {
+                data.forEach(product => {
+                    const productContainer = document.createElement('div');
+                    productContainer.classList.add('product-container');
+
+                    const productElement = document.createElement('div');
+                    productElement.classList.add('product');
+                    productElement.innerHTML = `
+                        <img src="${product.image}" alt="${product.name}">
+                        <h3>${product.name}</h3>
+                        <p>Price: $${product.value}</p>
+                        <button class="btn-buy" data-id="${product.id}" data-name="${product.name}" data-value="${product.value}">Buy Now</button>
+                    `;
+                    productContainer.appendChild(productElement);
+
+                    productsContainer.appendChild(productContainer);
+
+                    // Add click event to buy button
+                    productElement.querySelector('.btn-buy').addEventListener('click', (event) => {
+                        const { id, name, value } = event.target.dataset;
+                        addToCart({ id, name, value });
+                    });
+                });
+            })
+            .catch(error => console.error('Error fetching products:', error));
+
+            // Cart functionality
+            let cart = [];
+
+            function addToCart(product) {
+                cart.push(product);
+                renderCart();
+            }
+
+            function renderCart() {
+                cartContainer.innerHTML = '';
+                cart.forEach(item => {
+                    const cartItem = document.createElement('div');
+                    cartItem.classList.add('cart-item');
+                    cartItem.textContent = `${item.name} - $${item.value}`;
+                    cartContainer.appendChild(cartItem);
+                });
+            }
+
+            // Checkout functionality
+            checkoutButton.addEventListener('click', () => {
+                // Redirect to payment page with cart data as query parameters
+                const queryString = cart.map(item => `item=${encodeURIComponent(item.name)}&price=${encodeURIComponent(item.value)}`).join('&');
+                window.location.href = `payment.php?${queryString}`;
+            });
+        });
+    </script>
+</body>
+</html>
